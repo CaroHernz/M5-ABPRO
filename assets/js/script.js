@@ -7,27 +7,27 @@ function LeerJSON() {
     if (xhr.readyState === 4) {
       if (xhr.status === 200) {
         try {
-        var dataProductos = JSON.parse(xhr.responseText);
-        for (var i = 0; i < dataProductos.productos.length; i++) {
-          arrProductos.push(dataProductos.productos[i]);
-        }
-        console.log(arrProductos);
-        }
-        catch(e) {
+          var dataProductos = JSON.parse(xhr.responseText);
+          arrProductos = dataProductos.productos; // Asigna directamente
+          console.log("Productos cargados:", arrProductos);
+
+          // ✅ Ahora sí: renderiza las cards
+          novedadesProductos(arrProductos);
+          mostrarProductos(arrProductos);
+
+        } catch(e) {
           console.error('Error JSON', e); 
         }
       } else {
         console.error('Error al cargar el archivo:', xhr.statusText);
       }
     }
-  }
-  xhr.send()
+  };
+  xhr.send();
 }
 
 addEventListener('DOMContentLoaded', function() {
-  LeerJSON();
-  novedadesProductos(arrProductos);
-  mostrarProductos(arrProductos);
+  LeerJSON()
 })
 
 let carrito = JSON.parse(localStorage.getItem('carrito')) || [];
@@ -181,7 +181,7 @@ document.addEventListener('blur', (e) => {
 const filtroProductos = document.getElementById("filtroProductos");
 if (filtroProductos) {
     filtroProductos.addEventListener("input", (e) => {
-        const productosFiltrados = productos.filter(producto => {
+        const productosFiltrados = arrProductos.filter(producto => {
             return producto.nombre.toLowerCase().includes(e.target.value.toLowerCase())
         });
         mostrarProductos(productosFiltrados);
@@ -221,7 +221,7 @@ function agregaCarrito(productId) {
   cantidadProducto.classList.remove('is-invalid');
 
   // Lógica mínima de agregado (no solicitada, pero útil): sumar al carrito en memoria
-  const producto = productos.find(p => String(p.id) === String(productId));
+  const producto = arrProductos.find(p => String(p.id) === String(productId));
   if (!producto) return;
 
   const existente = carrito.find(item => String(item.id )=== String(productId));
