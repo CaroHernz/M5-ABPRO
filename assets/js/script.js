@@ -310,19 +310,24 @@ function renderCarrito() {
     seccionCarrito.style.display = 'block';
     document.getElementById('mensaje-carrito-vacio').style.display = 'none';
   }
-
-  carrito.forEach(function(item) {
+  for (var i = 0; i < carrito.length; i++) {
+    var item = carrito[i];
     var tr = document.createElement('tr');
     tr.innerHTML =
         '<td>' + item.id + '</td>' +
-        '<td class="text-center">' + item.cantidad + '</td>' +
+        '<td class="text-center">' +
+          '<div class="d-flex justify-content-center align-items-center">' +
+            '<button class="btn btn-outline-secondary minus-btn" type="button" onclick="modificarCantidad(\'' + item.id + '\', -1)">-</button>' +
+            '<span class="mx-2 cantidad-item">' + item.cantidad + '</span>' +
+            '<button class="btn btn-outline-secondary plus-btn" type="button" onclick="modificarCantidad(\'' + item.id + '\', 1)">+</button>' +
+          '</div>' + '</td>' +
         '<td>' + item.nombre + '</td>' +
         '<td>$' + (item.precio * item.cantidad).toLocaleString('es-CL') + '</td>' +
         '<td><button class="btn btn-danger" onclick="eliminarDelCarrito(\'' + item.id + '\')">' +
             '<i class="fa-solid fa-trash text-white"></i>' +
         '</button></td>';
     tbody.appendChild(tr);
-  });
+  };
   // Totalizador
   var neto = carrito.reduce(function(sum, item){return sum + item.cantidad * item.precio}, 0);
   var iva = Math.trunc(neto * 0.19);
@@ -368,7 +373,13 @@ function renderCarrito() {
 
 function eliminarDelCarrito(productId) {
   var idProducto = Number(productId);
-  var index = carrito.findIndex(item => item.id === idProducto);
+  var index = -1;
+  for (var i=0; i < carrito.length; i++) {
+    if (carrito[i].id === idProducto) {
+      index = i;
+      break;
+    }
+  }
   if (index !== -1) {
     carrito.splice(index, 1);
     localStorage.setItem('carrito', JSON.stringify(carrito));
@@ -382,4 +393,35 @@ function vaciarCarrito() {
   localStorage.removeItem('carrito');
   localStorage.removeItem('resumenCompra');
   renderCarrito();
+}
+//Modificar Cantidad en Carrito
+function modificarCantidad(productoId, delta) {
+  var producto = null;
+  var index = -1;
+
+  for (var i=0; i < carrito.length; i++) {
+    if (String(carrito[i].id) === String(productoId)) {
+      producto = carrito[i];
+      index = i;
+      break
+    }
+  }
+  if (!producto) return;
+
+  var nuevaCantidad = producto.cantidad + delta;
+  if (nuevaCantidad < 0) nuevaCantidad = 0;
+
+  if (nuevaCantidad === 0) {
+    carrito.splice(index,1);
+  } else {
+    producto.cantidad = nuevaCantidad;
+  }
+  localStorage.setItem('carrito', JSON.stringify(carrito));
+  renderCarrito();
+
+  if (delta > 0){
+    mostrarNotificacion('Cantidad aumentada')
+  } else {
+    mostrarNotificacion('Cantidad disminuida')
+  }
 }
