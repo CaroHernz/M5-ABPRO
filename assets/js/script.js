@@ -1,4 +1,12 @@
-var arrProductos = []
+var Producto = function(id, imagen, nombre, descripcion, precio, stock) {
+  this.id = id;
+  this.imagen = imagen;
+  this.nombre = nombre;
+  this.descripcion = descripcion;
+  this.precio = precio;
+  this.stock = stock;
+}
+var arrProductos = [];
 
 function LeerJSON() {
   var xhr = new XMLHttpRequest();
@@ -8,7 +16,9 @@ function LeerJSON() {
       if (xhr.status === 200) {
         try {
           var dataProductos = JSON.parse(xhr.responseText);
-          arrProductos = dataProductos.productos; // Asigna directamente
+          //arrProductos = dataProductos.productos; // Asigna directamente
+          arrProductos = dataProductos.productos.map(function(p) { return new Producto(p.id, p.imagen, p.nombre, p.descripcion, p.precio, p.stock); });// Asigna los productos a la clase Producto
+
           console.log("Productos cargados:", arrProductos);
 
           // ✅ Ahora sí: renderiza las cards
