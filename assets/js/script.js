@@ -1,3 +1,4 @@
+'use strict';
 var Producto = function(id, imagen, nombre, descripcion, precio, stock) {
   this.id = id;
   this.imagen = imagen;
@@ -191,10 +192,13 @@ function mostrarProductos(productos) {
   }
   if (productList) {
     productList.innerHTML = '';
-    productos.forEach(producto => {
-      const col = document.createElement('div');
+    productos.forEach(function(producto) {
+      var col = document.createElement('div');
       col.className = 'col-sm-12 col-md-4 mb-4';
-      var existenteEnCarrito = carrito.find(function (item) { return String(item.id) === String(producto.id); });
+      var existenteEnCarrito = null;
+      for (var k = 0; k < carrito.length; k++) {
+        if (String(carrito[k].id) === String(producto.id)) { existenteEnCarrito = carrito[k]; break; }
+      }
       var enCarrito = existenteEnCarrito ? existenteEnCarrito.cantidad : 0;
       var disponible = Math.max(0, producto.stock - enCarrito);
       var agotado = producto.stock <= 0 || disponible <= 0;
@@ -266,17 +270,17 @@ function validarDecimalPositivo(inputEl) {
   var num = Number(valor);
   var minValue = inputEl.min !== '' ? Number(inputEl.min) : 0;
   var maxValue = inputEl.max !== '' ? Number(inputEl.max) : Infinity;
-  var esEntero = Number.isInteger(num);
+  var esEntero = isFinite(num) && Math.floor(num) === num;
   var esValido = valor !== '' && isFinite(num) && esEntero && num >= minValue && num <= maxValue;
   inputEl.classList.toggle('is-invalid', !esValido);
   return esValido;
 }
 
 // Validar mientras se escribe y al salir del campo
-document.addEventListener('input', (e) => {
+document.addEventListener('input', function(e) {
   if (e.target.matches('.quantity-input')) validarDecimalPositivo(e.target);
 });
-document.addEventListener('blur', (e) => {
+document.addEventListener('blur', function(e) {
   if (e.target.matches('.quantity-input')) validarDecimalPositivo(e.target);
 }, true);
 
@@ -284,9 +288,10 @@ document.addEventListener('blur', (e) => {
 //filtro
 var filtroProductos = document.getElementById("filtroProductos");
 if (filtroProductos) {
-  filtroProductos.addEventListener("input", (e) => {
-    var productosFiltrados = arrProductos.filter(producto => {
-      return producto.nombre.toLowerCase().includes(e.target.value.toLowerCase())
+  filtroProductos.addEventListener('input', function(e) {
+    var texto = e.target.value.toLowerCase();
+    var productosFiltrados = arrProductos.filter(function(producto) {
+      return producto.nombre.toLowerCase().indexOf(texto) !== -1;
     });
     mostrarProductos(productosFiltrados);
   });
@@ -299,17 +304,17 @@ var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
 })
 
 // offcanvas
-var btnCarrito = document.getElementById("btnCarrito");
-var offcanvascarrito = new bootstrap.Offcanvas(document.getElementById("offcanvasCarrito"));
-btnCarrito.addEventListener("click", () => {
+var btnCarrito = document.getElementById('btnCarrito');
+var offcanvascarrito = new bootstrap.Offcanvas(document.getElementById('offcanvasCarrito'));
+btnCarrito.addEventListener('click', function() {
   offcanvascarrito.toggle();
 });
 
 // Carrito
 function agregaCarrito(productId) {
-  var cantidadProducto = document.getElementById(`cinput-${productId}`);
+  var cantidadProducto = document.getElementById('cinput-' + productId);
   if (!cantidadProducto) {
-    console.error(`Input cinput-${productId} no encontrado`);
+    console.error('Input cinput-' + productId + ' no encontrado');
     return;
   }
 
@@ -325,10 +330,16 @@ function agregaCarrito(productId) {
   cantidadProducto.classList.remove('is-invalid');
 
   // Lógica mínima de agregado (no solicitada, pero útil): sumar al carrito en memoria
-  var producto = arrProductos.find(p => String(p.id) === String(productId));
+  var producto = null;
+  for (var a = 0; a < arrProductos.length; a++) {
+    if (String(arrProductos[a].id) === String(productId)) { producto = arrProductos[a]; break; }
+  }
   if (!producto) return;
 
-  var existente = carrito.find(item => String(item.id) === String(productId));
+  var existente = null;
+  for (var b = 0; b < carrito.length; b++) {
+    if (String(carrito[b].id) === String(productId)) { existente = carrito[b]; break; }
+  }
   var enCarrito = existente ? existente.cantidad : 0;
   var disponible = Math.max(0, producto.stock - enCarrito);
 
@@ -347,7 +358,15 @@ function agregaCarrito(productId) {
   if (existente) {
     existente.cantidad += cantidad;
   } else {
-    carrito.push({ ...producto, cantidad });
+    carrito.push({
+      id: producto.id,
+      imagen: producto.imagen,
+      nombre: producto.nombre,
+      descripcion: producto.descripcion,
+      precio: producto.precio,
+      stock: producto.stock,
+      cantidad: cantidad
+    });
   }
 
   // Reiniciar el input después de agregar (opcional)
@@ -368,9 +387,9 @@ function mostrarNotificacion(mensaje) {
   notificacion.textContent = mensaje;
   document.body.appendChild(notificacion);
 
-  setTimeout(() => {
+  setTimeout(function() {
     notificacion.classList.add('fade-out');
-    setTimeout(() => notificacion.remove(), 500);
+    setTimeout(function() { notificacion.remove(); }, 500);
   }, 2500);
 }
 
