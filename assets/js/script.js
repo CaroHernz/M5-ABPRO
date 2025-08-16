@@ -1,4 +1,5 @@
 'use strict';
+'use strict';
 var Producto = function(id, imagen, nombre, descripcion, precio, stock) {
   this.id = id;
   this.imagen = imagen;
@@ -22,6 +23,19 @@ function LeerJSON() {
 
           console.log("Productos cargados:", arrProductos);
 
+          // Aplicar overrides de stock persistidos tras finalizar compra
+          var almacenStocks = localStorage.getItem('stocks');
+          if (almacenStocks) {
+            var overrides = {};
+            try { overrides = JSON.parse(almacenStocks); } catch (err) { overrides = {}; }
+            for (var si = 0; si < arrProductos.length; si++) {
+              var pr = arrProductos[si];
+              if (overrides && overrides[String(pr.id)] != null) {
+                pr.stock = overrides[String(pr.id)];
+              }
+            }
+          }
+
           // ✅ Ahora sí: renderiza las cards
           novedadesProductos(arrProductos);
           mostrarProductos(arrProductos);
@@ -40,17 +54,11 @@ function LeerJSON() {
 function actualizarDisponibilidadEnCards() {
   for (var i = 0; i < arrProductos.length; i++) {
     var producto = arrProductos[i];
-    var existente = null;
-    for (var j = 0; j < carrito.length; j++) {
-      if (String(carrito[j].id) === String(producto.id)) { existente = carrito[j]; break; }
-    }
-    var enCarrito = existente ? existente.cantidad : 0;
-    var disponible = Math.max(0, producto.stock - enCarrito);
-    var agotado = producto.stock <= 0 || disponible <= 0;
+    var agotado = producto.stock <= 0;
 
     var input = document.getElementById('cinput-' + producto.id);
     if (input) {
-      input.max = String(disponible);
+      input.max = String(producto.stock);
       if (agotado) {
         input.value = '0';
         input.setAttribute('disabled', '');
@@ -73,7 +81,7 @@ function actualizarDisponibilidadEnCards() {
       var stockMsg = '';
       if (agotado) {
         stockMsg = '<span class="badge bg-secondary">Agotado</span>';
-      } else if (producto.stock === 1 || disponible === 1) {
+      } else if (producto.stock === 1) {
         stockMsg = '<small class="text-danger">¡Último producto!</small>';
       } else if (producto.stock < 4) {
         stockMsg = '<small class="text-warning">Quedan ' + producto.stock + ' en stock</small>';
@@ -195,20 +203,15 @@ function mostrarProductos(productos) {
     productos.forEach(function(producto) {
       var col = document.createElement('div');
       col.className = 'col-sm-12 col-md-4 mb-4';
-      var existenteEnCarrito = null;
-      for (var k = 0; k < carrito.length; k++) {
-        if (String(carrito[k].id) === String(producto.id)) { existenteEnCarrito = carrito[k]; break; }
-      }
-      var enCarrito = existenteEnCarrito ? existenteEnCarrito.cantidad : 0;
-      var disponible = Math.max(0, producto.stock - enCarrito);
-      var agotado = producto.stock <= 0 || disponible <= 0;
+      // Mensajería basada solo en stock real
+      var agotado = producto.stock <= 0;
       var stockMsg = '';
       if (agotado) {
         stockMsg = '<span class="badge bg-secondary">Agotado</span>';
-      } else if (producto.stock === 1 || disponible === 1) {
+      } else if (producto.stock === 1) {
         stockMsg = '<small class="text-danger">¡Último producto!</small>';
-      } else if (disponible < 4 || producto.stock < 4) {
-        stockMsg = '<small class="text-warning">Quedan ' + disponible + ' en stock</small>';
+      } else if (producto.stock < 4) {
+        stockMsg = '<small class="text-warning">Quedan ' + producto.stock + ' en stock</small>';
       }
 
       col.innerHTML = col.innerHTML =
@@ -224,7 +227,7 @@ function mostrarProductos(productos) {
         '<div class="d-flex justify-content-between align-items-center">' +
         '<div class="input-group" style="width: 9.7rem;">' +
         '<button class="btn btn-outline-secondary minus-btn" type="button"' + (agotado ? ' disabled' : '') + '>-</button>' +
-        '<input type="number" class="form-control text-center quantity-input" id="cinput-' + producto.id + '" value="0" min="0" max="' + disponible + '" step="1"' + (agotado ? ' disabled' : '') + '>' +
+        '<input type="number" class="form-control text-center quantity-input" id="cinput-' + producto.id + '" value="0" min="0" max="' + producto.stock + '" step="1"' + (agotado ? ' disabled' : '') + '>' +
         '<button class="btn btn-outline-secondary plus-btn" type="button"' + (agotado ? ' disabled' : '') + '>+</button>' +
         '</div>' +
         '<button type="button" class="btn btn-primary" onclick="agregaCarrito(\'' + producto.id + '\')" data-id="' + producto.id + '" data-toggle="tooltip" data-placement="top" title="Añadir al carrito"' + (agotado ? ' disabled' : '') + '>Agregar</button>' +
@@ -340,19 +343,17 @@ function agregaCarrito(productId) {
   for (var b = 0; b < carrito.length; b++) {
     if (String(carrito[b].id) === String(productId)) { existente = carrito[b]; break; }
   }
-  var enCarrito = existente ? existente.cantidad : 0;
-  var disponible = Math.max(0, producto.stock - enCarrito);
 
-  if (producto.stock <= 0 || disponible <= 0) {
+  if (producto.stock <= 0) {
     mostrarNotificacion('Producto sin stock');
     return;
   }
 
-  if (cantidad > disponible) {
+  if (cantidad > producto.stock) {
     cantidadProducto.classList.add('is-invalid');
-    cantidadProducto.value = String(disponible);
+    cantidadProducto.value = String(producto.stock);
     cantidadProducto.focus();
-    mostrarNotificacion('Solo ' + disponible + ' disponible(s)');
+    mostrarNotificacion('Solo ' + producto.stock + ' disponible(s)');
     return;
   }
   if (existente) {
@@ -458,7 +459,7 @@ function renderCarrito() {
     '<p><strong>Valor Bruto:</strong> $' + bruto.toLocaleString('es-CL') + '</p>' +
     '<div class="d-flex justify-content-around">' +
         '<button type="button" class="btn btn-danger mb-5" onclick="vaciarCarrito()">Vaciar Carrito</button>' +
-        '<button type="button" class="btn btn-success mb-5" data-bs-toggle="modal" data-bs-target="#finalizarModal">Finalizar Compra</button>' +
+        '<button id="btn-finalizar-compra" type="button" class="btn btn-success mb-5" data-bs-toggle="modal" data-bs-target="#finalizarModal">Finalizar Compra</button>' +
     '</div>';
 
 
@@ -484,6 +485,21 @@ function renderCarrito() {
 
   if (typeof actualizarDisponibilidadEnCards === 'function') {
     actualizarDisponibilidadEnCards();
+  }
+
+  // Asociar handler a confirmación de compra (botón Aceptar del modal)
+  var modal = document.getElementById('finalizarModal');
+  if (modal) {
+    var botones = modal.getElementsByClassName('btn');
+    var btnAceptar = null;
+    for (var bi = 0; bi < botones.length; bi++) {
+      if (botones[bi].className.indexOf('btn-success') !== -1) { btnAceptar = botones[bi]; break; }
+    }
+    if (btnAceptar) {
+      btnAceptar.onclick = function() {
+        finalizarCompraPersistirStock();
+      };
+    }
   }
 
 }
@@ -554,4 +570,29 @@ function modificarCantidad(productoId, delta) {
   } else {
     mostrarNotificacion('Cantidad disminuida')
   }
+}
+
+// Descuenta stock de arrProductos al confirmar compra y persiste en localStorage('stocks')
+function finalizarCompraPersistirStock() {
+  if (!carrito || carrito.length === 0) { return; }
+  var stocks = {};
+  for (var i = 0; i < arrProductos.length; i++) {
+    stocks[String(arrProductos[i].id)] = arrProductos[i].stock;
+  }
+  for (var j = 0; j < carrito.length; j++) {
+    var citem = carrito[j];
+    for (var k = 0; k < arrProductos.length; k++) {
+      if (String(arrProductos[k].id) === String(citem.id)) {
+        var nuevo = arrProductos[k].stock - citem.cantidad;
+        if (nuevo < 0) { nuevo = 0; }
+        arrProductos[k].stock = nuevo;
+        stocks[String(arrProductos[k].id)] = nuevo;
+        break;
+      }
+    }
+  }
+  try { localStorage.setItem('stocks', JSON.stringify(stocks)); } catch (e) {}
+  vaciarCarrito();
+  mostrarProductos(arrProductos);
+  novedadesProductos(arrProductos);
 }
