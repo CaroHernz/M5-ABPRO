@@ -133,7 +133,7 @@ function novedadesProductos(productos) {
 // Card para Productos
 function mostrarProductos(productos) {
   var productList = document.getElementById('catalogo_productos');
-  carritoItems = document.getElementById('carrito-items')
+  var carritoItems = document.getElementById('carrito-items'); // corregido: var faltante
 
   if (!productList) {
     console.error('No se encontró #catalogo_productos');
@@ -144,84 +144,113 @@ function mostrarProductos(productos) {
     console.error('No se encontró #carrito-items');
     return;
   }
+
   if (productList) {
     productList.innerHTML = '';
-    productos.forEach(producto => {
-      const col = document.createElement('div');
+
+    // Reemplazamos forEach + arrow function por for tradicional
+    for (var i = 0; i < productos.length; i++) {
+      var producto = productos[i];
+      var col = document.createElement('div');
       col.className = 'col-sm-12 col-md-4 mb-4';
-      col.innerHTML = col.innerHTML =
+
+      col.innerHTML =
         '<div class="card h-100">' +
           '<img src="' + producto.imagen + '" class="card-img-top" alt="' + producto.nombre + '">' +
-        '<div class="card-body">' +
-          '<h5 class="card-title">' + producto.nombre + '</h5>' +
-          '<p class="card-text">' + producto.descripcion + '</p>' +
-        '</div>' +
-        '<div class="card-footer bg-white border-0">' +
-          '<h4 class="text-primary mt-3">$' + producto.precio.toLocaleString('es-CL') + '</h4>' +
-        '<div class="d-flex justify-content-between align-items-center">' +
-        '<div class="input-group" style="width: 9.7rem;">' +
-        '<button class="btn btn-outline-secondary minus-btn" type="button">-</button>' +
-        '<input type="number" class="form-control text-center quantity-input" id="cinput-' + producto.id + '" value="0" min="0" step="1">' +
-        '<button class="btn btn-outline-secondary plus-btn" type="button">+</button>' +
-        '</div>' +
-        '<button type="button" class="btn btn-primary" onclick="agregaCarrito(\'' + producto.id + '\')" data-id="' + producto.id + '" data-toggle="tooltip" data-placement="top" title="Añadir al carrito">Agregar</button>' +
-        '</div>' +
-        '</div>' +
+          '<div class="card-body">' +
+            '<h5 class="card-title">' + producto.nombre + '</h5>' +
+            '<p class="card-text">' + producto.descripcion + '</p>' +
+          '</div>' +
+          '<div class="card-footer bg-white border-0">' +
+            '<h4 class="text-primary mt-3">$' + producto.precio.toLocaleString('es-CL') + '</h4>' +
+            '<div class="d-flex justify-content-between align-items-center">' +
+              '<div class="input-group" style="width: 9.7rem;">' +
+                '<button class="btn btn-outline-secondary minus-btn" type="button">-</button>' +
+                '<input type="number" class="form-control text-center quantity-input" id="cinput-' + producto.id + '" value="0" min="0" step="1">' +
+                '<button class="btn btn-outline-secondary plus-btn" type="button">+</button>' +
+              '</div>' +
+              '<button type="button" class="btn btn-primary" onclick="agregaCarrito(\'' + producto.id + '\')" data-id="' + producto.id + '" data-toggle="tooltip" data-placement="top" title="Añadir al carrito">Agregar</button>' +
+            '</div>' +
+          '</div>' +
         '</div>';
 
       productList.appendChild(col);
 
-      // Selecciona todos los grupos de cantidad dentro de este producto
-      col.querySelectorAll('.input-group').forEach(function (group) {
+      // Obtener todos los input-group dentro de este col
+      var inputGroups = col.getElementsByClassName('input-group');
+      // Usamos for tradicional en lugar de forEach en NodeList
+      for (var j = 0; j < inputGroups.length; j++) {
+        var group = inputGroups[j];
         var minusBtn = group.querySelector('.minus-btn');
         var plusBtn = group.querySelector('.plus-btn');
         var input = group.querySelector('.quantity-input');
 
-        minusBtn.addEventListener('click', function () {
-          var step = (input.step && input.step !== 'any') ? Number(input.step) : 1;
-          var min = input.min !== '' ? Number(input.min) : 0;
-          var current = isFinite(Number(input.value)) ? Number(input.value) : 0;
-          var next = Math.max(min, current - step);
-          input.value = next;
-          validarDecimalPositivo(input);
-        });
+        // Función para evitar reuso
+        if (minusBtn && input) {
+          minusBtn.onclick = function(inputRef) {
+            return function() {
+              var step = (inputRef.step && inputRef.step !== 'any') ? Number(inputRef.step) : 1;
+              var min = inputRef.min !== '' ? Number(inputRef.min) : 0;
+              var current = isFinite(Number(inputRef.value)) ? Number(inputRef.value) : 0;
+              var next = Math.max(min, current - step);
+              inputRef.value = next;
+              validarDecimalPositivo(inputRef);
+            };
+          }(input); // Cierre de clausura para capturar input
+        }
 
-        plusBtn.addEventListener('click', function () {
-          var step = (input.step && input.step !== 'any') ? Number(input.step) : 1;
-          var current = isFinite(Number(input.value)) ? Number(input.value) : 0;
-          input.value = current + step;
-          validarDecimalPositivo(input);
-        });
-      });
-    });
+        if (plusBtn && input) {
+          plusBtn.onclick = function(inputRef) {
+            return function() {
+              var step = (inputRef.step && inputRef.step !== 'any') ? Number(inputRef.step) : 1;
+              var current = isFinite(Number(inputRef.value)) ? Number(inputRef.value) : 0;
+              inputRef.value = current + step;
+              validarDecimalPositivo(inputRef);
+            };
+          }(input);
+        }
+      }
+    }
   }
-};
+}
 // Validar input de cantidad para que no se pueda ingresar un numero negativo u otro caracter
 function validarDecimalPositivo(inputEl) {
   var valor = String(inputEl.value).replace(',', '.').trim();
   var num = Number(valor);
   var minValue = inputEl.min !== '' ? Number(inputEl.min) : 0;
-  var esEntero = Number.isInteger(num);
+
+  // Reemplazo de Number.isInteger (ES6) por lógica ES5
+  var esEntero = isFinite(num) && Math.floor(num) === num;
+
   var esValido = valor !== '' && isFinite(num) && esEntero && num >= minValue;
+
+  // Opcional: si quieres mantener classList.toggle, es válido en ES5
+  // (classList existe desde ES5, aunque toggle con 2 args es más nuevo)
   inputEl.classList.toggle('is-invalid', !esValido);
+
   return esValido;
 }
 
 // Validar mientras se escribe y al salir del campo
-document.addEventListener('input', (e) => {
-  if (e.target.matches('.quantity-input')) validarDecimalPositivo(e.target);
+document.addEventListener('input', function(e) {
+  if (e.target.matches('.quantity-input')) {
+    validarDecimalPositivo(e.target);
+  }
 });
-document.addEventListener('blur', (e) => {
-  if (e.target.matches('.quantity-input')) validarDecimalPositivo(e.target);
+
+document.addEventListener('blur', function(e) {
+  if (e.target.matches('.quantity-input')) {
+    validarDecimalPositivo(e.target);
+  }
 }, true);
 
 
 //filtro
 var filtroProductos = document.getElementById("filtroProductos");
 if (filtroProductos) {
-    filtroProductos.addEventListener("input", (e) => {
-        const productosFiltrados = arrProductos.filter(producto => {
-            return producto.nombre.toLowerCase().includes(e.target.value.toLowerCase())
+    filtroProductos.addEventListener("input", function(e) {
+        var productosFiltrados = arrProductos.filter(function(producto) {
+            return producto.nombre.toLowerCase().indexOf(e.target.value.toLowerCase()) !== -1;
         });
         mostrarProductos(productosFiltrados);
     });
@@ -236,22 +265,31 @@ var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
 // offcanvas
 var btnCarrito = document.getElementById("btnCarrito");
 var offcanvascarrito = new bootstrap.Offcanvas(document.getElementById("offcanvasCarrito"));
-btnCarrito.addEventListener("click", () => {
+
+btnCarrito.addEventListener("click", function() {
   offcanvascarrito.toggle();
 });
 
 // Carrito
 function agregaCarrito(productId) {
-  var cantidadProducto = document.getElementById(`cinput-${productId}`);
+  var cantidadProducto = document.getElementById('cinput-' + productId);
   if (!cantidadProducto) {
-    console.error(`Input cinput-${productId} no encontrado`);
+    console.error('Input cinput-' + productId + ' no encontrado');
     return;
   }
 
-  var valor = String(cantidadProducto.value).replace(',', '.').trim();
+  var valor = String(cantidadProducto.value).replace(',', '.');
+  // Opcional: polyfill de trim si es crítico
+  if (valor.trim) {
+    valor = valor.trim();
+  } else {
+    valor = valor.replace(/^\s+|\s+$/g, '');
+  }
+
   var cantidad = Number(valor);
 
-  if (!isFinite(cantidad) || !Number.isInteger(cantidad) || cantidad < 1) {
+  // Validación: número finito, entero, mayor o igual a 1
+  if (!isFinite(cantidad) || Math.floor(cantidad) !== cantidad || cantidad < 1) {
     cantidadProducto.classList.add('is-invalid');
     cantidadProducto.focus();
     return;
@@ -259,23 +297,46 @@ function agregaCarrito(productId) {
 
   cantidadProducto.classList.remove('is-invalid');
 
-  // Lógica mínima de agregado (no solicitada, pero útil): sumar al carrito en memoria
-  const producto = arrProductos.find(p => String(p.id) === String(productId));
+  // Buscar producto en arrProductos
+  var producto = null;
+  for (var i = 0; i < arrProductos.length; i++) {
+    if (String(arrProductos[i].id) === String(productId)) {
+      producto = arrProductos[i];
+      break;
+    }
+  }
+
   if (!producto) return;
 
-  var existente = carrito.find(item => String(item.id) === String(productId));
+  // Buscar si ya está en el carrito
+  var existente = null;
+  for (var j = 0; j < carrito.length; j++) {
+    if (String(carrito[j].id) === String(productId)) {
+      existente = carrito[j];
+      break;
+    }
+  }
+
   if (existente) {
     existente.cantidad += cantidad;
   } else {
-    carrito.push({ ...producto, cantidad });
+    carrito.push({
+      id: producto.id,
+      imagen: producto.imagen,
+      nombre: producto.nombre,
+      descripcion: producto.descripcion,
+      precio: producto.precio,
+      stock: producto.stock,
+      cantidad: cantidad
+    });
   }
 
-  // Reiniciar el input después de agregar (opcional)
+  // Reiniciar el input
   cantidadProducto.value = '0';
 
   renderCarrito();
 
-  mostrarNotificacion("¡" + cantidad + " " + producto.nombre +" agregado(s) al carrito!");
+  mostrarNotificacion("¡" + cantidad + " " + producto.nombre + " agregado(s) al carrito!");
 }
 function mostrarNotificacion(mensaje) {
   var notificacion = document.createElement('div');
@@ -284,9 +345,13 @@ function mostrarNotificacion(mensaje) {
   notificacion.textContent = mensaje;
   document.body.appendChild(notificacion);
 
-  setTimeout(() => {
+  setTimeout(function() {
     notificacion.classList.add('fade-out');
-    setTimeout(() => notificacion.remove(), 500);
+    setTimeout(function() {
+      if (notificacion.parentNode) {
+        notificacion.parentNode.removeChild(notificacion);
+      }
+    }, 500);
   }, 2500);
 }
 
@@ -300,7 +365,7 @@ function cambiarCantidad(id, delta) {
 };
 
 function renderCarrito() {
-  var seccionCarrito = document.getElementById('seccion-carrito')
+  var seccionCarrito = document.getElementById('seccion-carrito');
   var tabla = document.getElementById('tabla-carrito');
   var tbody = tabla.querySelector('tbody');
   var contadorCarrito = document.getElementById('contador-carrito');
@@ -320,6 +385,7 @@ function renderCarrito() {
     seccionCarrito.style.display = 'block';
     document.getElementById('mensaje-carrito-vacio').style.display = 'none';
   }
+
   for (var i = 0; i < carrito.length; i++) {
     var item = carrito[i];
     var tr = document.createElement('tr');
@@ -337,12 +403,16 @@ function renderCarrito() {
             '<i class="fa-solid fa-trash text-white"></i>' +
         '</button></td>';
     tbody.appendChild(tr);
-  };
+  }
+
   // Totalizador
-  var neto = carrito.reduce(function(sum, item){return sum + item.cantidad * item.precio}, 0);
-  var iva = Math.trunc(neto * 0.19);
+  var neto = carrito.reduce(function(sum, item) {
+    return sum + item.cantidad * item.precio;
+  }, 0);
+
+  var iva = Math.floor(neto * 0.19);  // Reemplazo de Math.trunc
   var bruto = neto + iva;
-  var despacho = bruto < 100000 ? Math.trunc(bruto * 0.05) : 0;
+  var despacho = bruto < 100000 ? Math.floor(bruto * 0.05) : 0;  // También truncamos aquí
   bruto += despacho;
 
   carritoSummary.innerHTML = 
@@ -358,29 +428,32 @@ function renderCarrito() {
         '<button type="button" class="btn btn-success mb-5" data-bs-toggle="modal" data-bs-target="#finalizarModal">Finalizar Compra</button>' +
     '</div>';
 
-
+  // Guardar en localStorage
   localStorage.setItem('carrito', JSON.stringify(carrito));
   localStorage.setItem('resumenCompra', JSON.stringify({
-    neto, iva, bruto, despacho
+    neto: neto,
+    iva: iva,
+    bruto: bruto,
+    despacho: despacho
   }));
 
-  //Contador carrito
-  var itemsCarrito = carrito.reduce(function(sum, item){return sum + item.cantidad}, 0);
+  // Contador carrito
+  var itemsCarrito = carrito.reduce(function(sum, item) {
+    return sum + item.cantidad;
+  }, 0);
+
   if (contadorCarrito) {
     if (itemsCarrito > 0) {
       contadorCarrito.textContent = itemsCarrito;
       contadorCarrito.style.display = 'flex';
       if (itemsCarrito > 99) {
         contadorCarrito.textContent = '99+';
-      };
-    }
-    else {
-      contadorCarrito.style.display = 'none'
+      }
+    } else {
+      contadorCarrito.style.display = 'none';
     }
   }
-
 }
-
 function eliminarDelCarrito(productId) {
   var idProducto = Number(productId);
   var index = -1;
