@@ -36,6 +36,51 @@ function LeerJSON() {
   xhr.send();
 }
 
+function actualizarDisponibilidadEnCards() {
+  for (var i = 0; i < arrProductos.length; i++) {
+    var producto = arrProductos[i];
+    var existente = null;
+    for (var j = 0; j < carrito.length; j++) {
+      if (String(carrito[j].id) === String(producto.id)) { existente = carrito[j]; break; }
+    }
+    var enCarrito = existente ? existente.cantidad : 0;
+    var disponible = Math.max(0, producto.stock - enCarrito);
+    var agotado = producto.stock <= 0 || disponible <= 0;
+
+    var input = document.getElementById('cinput-' + producto.id);
+    if (input) {
+      input.max = String(disponible);
+      if (agotado) {
+        input.value = '0';
+        input.setAttribute('disabled', '');
+      } else {
+        input.removeAttribute('disabled');
+      }
+    }
+
+    var btnAgregar = document.querySelector('[data-id="' + producto.id + '"]');
+    if (btnAgregar) {
+      if (agotado) {
+        btnAgregar.setAttribute('disabled', '');
+      } else {
+        btnAgregar.removeAttribute('disabled');
+      }
+    }
+
+    var indicador = document.getElementById('stock-indicator-' + producto.id);
+    if (indicador) {
+      var stockMsg = '';
+      if (agotado) {
+        stockMsg = '<span class="badge bg-secondary">Agotado</span>';
+      } else if (producto.stock === 1 || disponible === 1) {
+        stockMsg = '<small class="text-danger">¡Último producto!</small>';
+      } else if (producto.stock < 4) {
+        stockMsg = '<small class="text-warning">Quedan ' + producto.stock + ' en stock</small>';
+      }
+      indicador.innerHTML = stockMsg;
+    }
+  }
+}
 addEventListener('DOMContentLoaded', function () {
   LeerJSON()
 })
@@ -149,6 +194,19 @@ function mostrarProductos(productos) {
     productos.forEach(producto => {
       const col = document.createElement('div');
       col.className = 'col-sm-12 col-md-4 mb-4';
+      var existenteEnCarrito = carrito.find(function (item) { return String(item.id) === String(producto.id); });
+      var enCarrito = existenteEnCarrito ? existenteEnCarrito.cantidad : 0;
+      var disponible = Math.max(0, producto.stock - enCarrito);
+      var agotado = producto.stock <= 0 || disponible <= 0;
+      var stockMsg = '';
+      if (agotado) {
+        stockMsg = '<span class="badge bg-secondary">Agotado</span>';
+      } else if (producto.stock === 1 || disponible === 1) {
+        stockMsg = '<small class="text-danger">¡Último producto!</small>';
+      } else if (disponible < 4 || producto.stock < 4) {
+        stockMsg = '<small class="text-warning">Quedan ' + disponible + ' en stock</small>';
+      }
+
       col.innerHTML = col.innerHTML =
         '<div class="card h-100">' +
           '<img src="' + producto.imagen + '" class="card-img-top" alt="' + producto.nombre + '">' +
@@ -158,13 +216,14 @@ function mostrarProductos(productos) {
         '</div>' +
         '<div class="card-footer bg-white border-0">' +
           '<h4 class="text-primary mt-3">$' + producto.precio.toLocaleString('es-CL') + '</h4>' +
+          '<div id="stock-indicator-' + producto.id + '" class="mt-2">' + stockMsg + '</div>' +
         '<div class="d-flex justify-content-between align-items-center">' +
         '<div class="input-group" style="width: 9.7rem;">' +
-        '<button class="btn btn-outline-secondary minus-btn" type="button">-</button>' +
-        '<input type="number" class="form-control text-center quantity-input" id="cinput-' + producto.id + '" value="0" min="0" step="1">' +
-        '<button class="btn btn-outline-secondary plus-btn" type="button">+</button>' +
+        '<button class="btn btn-outline-secondary minus-btn" type="button"' + (agotado ? ' disabled' : '') + '>-</button>' +
+        '<input type="number" class="form-control text-center quantity-input" id="cinput-' + producto.id + '" value="0" min="0" max="' + disponible + '" step="1"' + (agotado ? ' disabled' : '') + '>' +
+        '<button class="btn btn-outline-secondary plus-btn" type="button"' + (agotado ? ' disabled' : '') + '>+</button>' +
         '</div>' +
-        '<button type="button" class="btn btn-primary" onclick="agregaCarrito(\'' + producto.id + '\')" data-id="' + producto.id + '" data-toggle="tooltip" data-placement="top" title="Añadir al carrito">Agregar</button>' +
+        '<button type="button" class="btn btn-primary" onclick="agregaCarrito(\'' + producto.id + '\')" data-id="' + producto.id + '" data-toggle="tooltip" data-placement="top" title="Añadir al carrito"' + (agotado ? ' disabled' : '') + '>Agregar</button>' +
         '</div>' +
         '</div>' +
         '</div>';
@@ -189,11 +248,16 @@ function mostrarProductos(productos) {
         plusBtn.addEventListener('click', function () {
           var step = (input.step && input.step !== 'any') ? Number(input.step) : 1;
           var current = isFinite(Number(input.value)) ? Number(input.value) : 0;
-          input.value = current + step;
+          var max = input.max !== '' ? Number(input.max) : Infinity;
+          var next = Math.min(max, current + step);
+          input.value = next;
           validarDecimalPositivo(input);
         });
       });
     });
+    if (typeof actualizarDisponibilidadEnCards === 'function') {
+      actualizarDisponibilidadEnCards();
+    }
   }
 };
 // Validar input de cantidad para que no se pueda ingresar un numero negativo u otro caracter
@@ -201,8 +265,9 @@ function validarDecimalPositivo(inputEl) {
   var valor = String(inputEl.value).replace(',', '.').trim();
   var num = Number(valor);
   var minValue = inputEl.min !== '' ? Number(inputEl.min) : 0;
+  var maxValue = inputEl.max !== '' ? Number(inputEl.max) : Infinity;
   var esEntero = Number.isInteger(num);
-  var esValido = valor !== '' && isFinite(num) && esEntero && num >= minValue;
+  var esValido = valor !== '' && isFinite(num) && esEntero && num >= minValue && num <= maxValue;
   inputEl.classList.toggle('is-invalid', !esValido);
   return esValido;
 }
@@ -264,6 +329,21 @@ function agregaCarrito(productId) {
   if (!producto) return;
 
   var existente = carrito.find(item => String(item.id) === String(productId));
+  var enCarrito = existente ? existente.cantidad : 0;
+  var disponible = Math.max(0, producto.stock - enCarrito);
+
+  if (producto.stock <= 0 || disponible <= 0) {
+    mostrarNotificacion('Producto sin stock');
+    return;
+  }
+
+  if (cantidad > disponible) {
+    cantidadProducto.classList.add('is-invalid');
+    cantidadProducto.value = String(disponible);
+    cantidadProducto.focus();
+    mostrarNotificacion('Solo ' + disponible + ' disponible(s)');
+    return;
+  }
   if (existente) {
     existente.cantidad += cantidad;
   } else {
@@ -274,6 +354,10 @@ function agregaCarrito(productId) {
   cantidadProducto.value = '0';
 
   renderCarrito();
+
+  if (typeof actualizarDisponibilidadEnCards === 'function') {
+    actualizarDisponibilidadEnCards();
+  }
 
   mostrarNotificacion("¡" + cantidad + " " + producto.nombre +" agregado(s) al carrito!");
 }
@@ -379,6 +463,10 @@ function renderCarrito() {
     }
   }
 
+  if (typeof actualizarDisponibilidadEnCards === 'function') {
+    actualizarDisponibilidadEnCards();
+  }
+
 }
 
 function eliminarDelCarrito(productId) {
@@ -418,7 +506,20 @@ function modificarCantidad(productoId, delta) {
   }
   if (!producto) return;
 
+  var productoOriginal = null;
+  for (var j=0; j < arrProductos.length; j++) {
+    if (String(arrProductos[j].id) === String(productoId)) {
+      productoOriginal = arrProductos[j];
+      break;
+    }
+  }
+  var stock = productoOriginal ? productoOriginal.stock : producto.cantidad;
+
   var nuevaCantidad = producto.cantidad + delta;
+  if (nuevaCantidad > stock) {
+    nuevaCantidad = stock;
+    mostrarNotificacion('No hay stock suficiente');
+  }
   if (nuevaCantidad < 0) nuevaCantidad = 0;
 
   if (nuevaCantidad === 0) {
