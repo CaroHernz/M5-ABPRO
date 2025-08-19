@@ -1,5 +1,5 @@
 'use strict';
-'use strict';
+
 var Producto = function(id, imagen, nombre, descripcion, precio, stock) {
   this.id = id;
   this.imagen = imagen;
@@ -200,7 +200,8 @@ function mostrarProductos(productos) {
   }
   if (productList) {
     productList.innerHTML = '';
-    productos.forEach(function(producto) {
+    for (var i = 0; i < productos.length; i++) {
+      var producto = productos[i];
       var col = document.createElement('div');
       col.className = 'col-sm-12 col-md-4 mb-4';
       // Mensajería basada solo en stock real
@@ -238,7 +239,9 @@ function mostrarProductos(productos) {
       productList.appendChild(col);
 
       // Selecciona todos los grupos de cantidad dentro de este producto
-      col.querySelectorAll('.input-group').forEach(function (group) {
+      var inputGroups = col.querySelectorAll('.input-group');
+      for (var j = 0; j < inputGroups.length; j++) {
+        var group = inputGroups[j];
         var minusBtn = group.querySelector('.minus-btn');
         var plusBtn = group.querySelector('.plus-btn');
         var input = group.querySelector('.quantity-input');
@@ -260,8 +263,8 @@ function mostrarProductos(productos) {
           input.value = next;
           validarDecimalPositivo(input);
         });
-      });
-    });
+      }
+    }
     if (typeof actualizarDisponibilidadEnCards === 'function') {
       actualizarDisponibilidadEnCards();
     }
