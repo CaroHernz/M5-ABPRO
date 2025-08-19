@@ -579,20 +579,39 @@ function modificarCantidad(productoId, delta) {
 function finalizarCompraPersistirStock() {
   if (!carrito || carrito.length === 0) { return; }
   var stocks = {};
+  var productosAgotados = [];
+  
   for (var i = 0; i < arrProductos.length; i++) {
     stocks[String(arrProductos[i].id)] = arrProductos[i].stock;
   }
+  
   for (var j = 0; j < carrito.length; j++) {
     var citem = carrito[j];
     for (var k = 0; k < arrProductos.length; k++) {
       if (String(arrProductos[k].id) === String(citem.id)) {
         var nuevo = arrProductos[k].stock - citem.cantidad;
         if (nuevo < 0) { nuevo = 0; }
+        
+        // Verificar si el stock quedó en 0 después de la compra
+        if (nuevo === 0 && arrProductos[k].stock > 0) {
+          productosAgotados.push(arrProductos[k].nombre);
+        }
+        
         arrProductos[k].stock = nuevo;
         stocks[String(arrProductos[k].id)] = nuevo;
         break;
       }
     }
+  }
+  
+  // Mostrar alert si algún producto quedó agotado
+  if (productosAgotados.length > 0) {
+    var mensaje = '¡Atención! Los siguientes productos se han agotado:\n\n';
+    for (var m = 0; m < productosAgotados.length; m++) {
+      mensaje += '• ' + productosAgotados[m] + '\n';
+    }
+    mensaje += '\nSe recomienda reponer el inventario.';
+    alert(mensaje);
   }
   try { localStorage.setItem('stocks', JSON.stringify(stocks)); } catch (e) {}
   vaciarCarrito();
