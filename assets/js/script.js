@@ -241,6 +241,7 @@ function mostrarProductos(productos) {
       // Selecciona todos los grupos de cantidad dentro de este producto
       var inputGroups = col.querySelectorAll('.input-group');
       for (var j = 0; j < inputGroups.length; j++) {
+        (function() {
         var group = inputGroups[j];
         var minusBtn = group.querySelector('.minus-btn');
         var plusBtn = group.querySelector('.plus-btn');
@@ -263,6 +264,7 @@ function mostrarProductos(productos) {
           input.value = next;
           validarDecimalPositivo(input);
         });
+      })()
       }
     }
     if (typeof actualizarDisponibilidadEnCards === 'function') {
