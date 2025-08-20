@@ -1,12 +1,13 @@
 'use strict';
 
-var Producto = function(id, imagen, nombre, descripcion, precio, stock) {
+var Producto = function(id, imagen, nombre, descripcion, precio, stock,categoria) {
   this.id = id;
   this.imagen = imagen;
   this.nombre = nombre;
   this.descripcion = descripcion;
   this.precio = precio;
   this.stock = stock;
+  this.categoria = categoria
 }
 var arrProductos = [];
 
@@ -19,7 +20,7 @@ function LeerJSON() {
         try {
           var dataProductos = JSON.parse(xhr.responseText);
           //arrProductos = dataProductos.productos; // Asigna directamente
-          arrProductos = dataProductos.productos.map(function(p) { return new Producto(p.id, p.imagen, p.nombre, p.descripcion, p.precio, p.stock); });// Asigna los productos a la clase Producto
+          arrProductos = dataProductos.productos.map(function(p) { return new Producto(p.id, p.imagen, p.nombre, p.descripcion, p.precio, p.stock, p.categoria); });// Asigna los productos a la clase Producto
 
           console.log("Productos cargados:", arrProductos);
 
@@ -304,7 +305,21 @@ if (filtroProductos) {
     mostrarProductos(productosFiltrados);
   });
 }
+const selectCategoria = document.getElementById("selectCategoria");
+function filtroCategoria() {
+if(!selectCategoria) return;
 
+const categoriaSeleccionada = selectCategoria.value;
+if(categoriaSeleccionada === "") {
+  mostrarProductos(arrProductos);
+} else {
+  const productosFiltrados = arrProductos.filter(function(producto) { return producto.categoria === categoriaSeleccionada});
+  mostrarProductos(productosFiltrados)
+}
+}
+if(selectCategoria) {
+  selectCategoria.addEventListener('change', filtroCategoria)
+}
 //tooltip
 var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-toggle="tooltip"]'))
 var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {

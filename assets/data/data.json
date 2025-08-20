@@ -6,7 +6,8 @@
         "nombre": "Robot Aspirador X300",
         "descripcion": "Aspiradora inteligente con mapeo láser y app control. Ideal para pisos de hasta 120m².",
         "precio": 249990,
-        "stock": 5
+        "stock": 5,
+        "categoria": "Electrohogar"
     },
     {
         "id": 2,
@@ -14,7 +15,8 @@
         "nombre": "Airfryer Digital 5L",
         "descripcion": "Freidora de aire con 8 programas preestablecidos y tecnología 360° para cocción uniforme.",
         "precio": 89990,
-        "stock": 7
+        "stock": 7,
+        "categoria": "Electrohogar"
     },
     {
         "id": 3,
@@ -22,7 +24,8 @@
         "nombre": "Smartwatch Deportivo Pro",
         "descripcion": "Monitor de ritmo cardíaco, GPS integrado y resistencia al agua 50m. Batería de 7 días.",
         "precio": 129990,
-        "stock": 15
+        "stock": 15,
+        "categoria": "Tecnología"
     },
     {
         "id": 4,
@@ -30,7 +33,8 @@
         "nombre": "Parlante Bluetooth XSound",
         "descripcion": "Sonido 360° con 20W de potencia. Resistente al agua IPX7 y batería de 15 horas.",
         "precio": 59990,
-        "stock": 10
+        "stock": 10,
+        "categoria": "Tecnología"
     },
     {
         "id": 5,
@@ -38,7 +42,8 @@
         "nombre": "Kit Limpieza para Robot",
         "descripcion": "Incluye 6 paños de microfibra, 2 cepillos y solución limpiadora compatible con marcas principales.",
         "precio": 19990,
-        "stock": 25
+        "stock": 25,
+        "categoria": "Electrohogar"
     },
     {
         "id": 6,
@@ -46,7 +51,8 @@
         "nombre": "Cargador Inalámbrico 3en1",
         "descripcion": "Carga tu smartphone, reloj y audífonos simultáneamente. Potencia 15W.",
         "precio": 34990,
-        "stock": 12
+        "stock": 12,
+        "categoria": "Tecnología"
     },
     {
         "id": 7,
@@ -54,7 +60,8 @@
         "nombre": "Laptop UltraSlim i7",
         "descripcion": "Pantalla de 14' FHD, 16GB RAM, SSD 512GB, Intel Iris Xe. Solo 1.2kg de peso.",
         "precio": 899990,
-        "stock": 2
+        "stock": 2,
+        "categoria": "Tecnología"
     },
     {
         "id": 8,
@@ -62,7 +69,8 @@
         "nombre": "Robot Cocina 12 en 1",
         "descripcion": "Amasa, cocina al vapor, fríe y más. Pantalla táctil y 50 recetas preprogramadas.",
         "precio": 249990,
-        "stock": 4
+        "stock": 4,
+        "categoria": "Electrohogar"
     },
     {
         "id": 9,
@@ -70,7 +78,8 @@
         "nombre": "Monitor Gamer 32' 4K",
         "descripcion": "144Hz, 1ms, HDR600, AMD FreeSync Premium. Incluye soporte ajustable.",
         "precio": 459990,
-        "stock": 8
+        "stock": 8,
+        "categoria": "Tecnología"
     },
     {
         "id": 10,
@@ -78,7 +87,8 @@
         "nombre": "Cafetera Smart WiFi",
         "descripcion": "Prepara café desde tu app. Molinillo integrado y 6 perfiles de bebidas.",
         "precio": 179990,
-        "stock": 3
+        "stock": 3,
+        "categoria": "Electrohogar"
     },
     {
         "id": 11,
@@ -86,7 +96,8 @@
         "nombre": "SSD Externo 2TB USB-C",
         "descripcion": "1050MB/s, resistente a golpes y agua. Ideal para gamers y creadores de contenido.",
         "precio": 89990,
-        "stock": 9
+        "stock": 9,
+        "categoria": "Tecnología"
     },
     {
         "id": 12,
@@ -94,7 +105,8 @@
         "nombre": "Mouse Gaming Pro RGB",
         "descripcion": "16.000 DPI, 8 botones programables, iluminación RGB personalizable y diseño ergonómico para gaming prolongado.",
         "precio": 49990,
-        "stock": 0
+        "stock": 0,
+        "categoria": "Tecnología"
     }
 ]
 }

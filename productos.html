@@ -91,6 +91,21 @@
         <div class="container">
             <h5 class="text-start">Búsqueda de Productos</h5>
             <input type="text" name="" id="filtroProductos" class="form-control" placeholder="Buscar productos...">
+            <div class="row">
+              <form action="" class="form-group mt-3 col-6">
+                <label for="selectCategoria" class="text-start"><h5>Búsqueda por Categoría</h5></label>
+                <select class="form-select" id="selectCategoria">
+                  <option value="">--Seleccione--</option>
+                  <option value="Tecnología">Tecnología</option>
+                  <option value="Electrohogar">Electrohogar</option>
+                </select>
+                </form>
+                <form action="" class="form-group mt-3 col-6 row">
+                  <label for="formControlRange" class="text-start"><h5>Búsqueda por Precio</h5></label>
+                  <input type="range" class="form-control-range ms-3" id="formControlRange">
+                </form>
+            </div>
+          
             <section id="catalogo_productos" class="row cards d-flex my-3 py-3 justify-content-evenly">
 
             </section>
